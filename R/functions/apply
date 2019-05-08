@@ -1,0 +1,44 @@
+# apply -------------------------------------------------------------------
+
+# Import package
+if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
+if (!require(gridExtra)) {install.packages("gridExtra")}; require(gridExtra)
+
+# tapply, INDEX(factors)별로 X(vector object)에 FUN 적용
+tapply(X = diamonds$price, INDEX = diamonds$cut, FUN = mean)
+
+# apply, X(array including matrix) MARGIN = 1(rows) | 2(columns), FUN = function to be applied
+apply(X = mtcars, MARGIN = 1, FUN = mean)
+apply(X = mtcars, MARGIN = 2, FUN = mean, na.rm = TRUE) # mean(na.rm = TRUE)에서 na.rm 인자를 ,로 이어서 사용
+
+# sapply (simple apply) - return vector or matrix
+sapply(mtcars, function(x) mean(x, na.rm = TRUE))
+sapply(mtcars, mean, na.rm = TRUE)
+
+# lapply
+lapply(mtcars, function(x) mean(x, na.rm = TRUE))
+unlist(lapply(mtcars, function(x) mean(x, na.rm = TRUE)))
+
+# vapply, 출력 형식을 지정할 수 있음
+sapply(mtcars, fivenum)
+vapply(mtcars, fivenum, c("Min" = 0, "1st Quantile" = 0, "Median" = 0, "3rd Quantile" = 0, "Max" = 0))
+
+# lapply - list, 간단한 예시
+temp <- split(diamonds, diamonds$cut) # data.frame to list
+
+# list 각 data.frame에서 간단한 regression 적용
+lm_list <- lapply(temp, function(data) {
+  lm.fit <- lm(formula = price ~ carat + depth, 
+               data = data)
+  summary(lm.fit)
+})
+lm_list
+
+# list 내 각 data.frame에서 간단한 plotting 시행
+graph_list <- lapply(temp, function(data) {
+  gp <- ggplot(data) +
+    geom_point(aes(x = carat, y = price, colour = clarity)) +
+    labs(title = names(data))
+  gp
+})
+do.call("grid.arrange", c(graph_list, ncol = 1))
