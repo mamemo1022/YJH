@@ -1,0 +1,74 @@
+# dplyr -------------------------------------------------------------------
+
+# import packages
+if (!require(dplyr)) {install.packages("dplyr")}; require(dplyr)
+if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
+
+# 예제 data
+head(diamonds, 10)
+
+# "cut" 변수 별 data 갯수
+diamonds %>% group_by(cut) %>% tally()
+
+diamonds %>% count(cut)
+
+# diamonds data "cut" 변수 별 통계량
+diamonds %>% group_by(cut) %>% summarise(n = n(),
+                                         distinct = n_distinct(clarity),
+                                         min = min(price),
+                                         max = max(price),
+                                         median = median(price),
+                                         mean = median(price),
+                                         sd = sd(price),
+                                         q1 = quantile(price, 0.25),
+                                         q3 = quantile(price, 0.75))
+
+# 사용할 변수 선택 및 "price" 변수 기준으로 데이터 정렬
+diamonds %>% select(cut, carat, price) %>% arrange(price)
+diamonds %>% select(cut, carat, price) %>% arrange(desc(price))
+
+# 변수 subsetting
+names(diamonds)
+diamonds %>% select(carat, cut, color, clarity)
+diamonds %>% select(1:4)
+diamonds %>% select(contains("c")) # "c"를 포함하는 변수들 선택
+diamonds %>% select(starts_with("c")) # "c"로 시작하는 변수들 선택
+diamonds %>% select(ends_with("e")) # "e"로 끝나는 변수들 선택
+diamonds %>% select(x, y, z, everything()) # 순서 바꾸기
+
+# 기준에 따른 subsetting
+diamonds %>% filter(cut == "Premium" & color == "E")
+
+# compare that data.frames are wheter equal or not
+df1 <- diamonds
+df2 <- diamonds
+
+all_equal(df1, df2, ignore_col_order = T, ignore_row_order = T) # TRUE
+
+# cbind
+bind_cols(df1, df2)
+
+# rbind
+bind_rows(df1, df2)
+
+# unique한 값을 가지는 data.frames
+distinct(diamonds)
+
+# 변수명 변경
+df3 <- rename(df1,
+              Price = price,
+              X = x,
+              Y = y,
+              Z = z); df3
+
+# packages의 충돌로 dplyr 내장 함수가 작동안하는 경우 대안
+select <- dplyr::select
+
+# data merging
+x <- data.frame(A = 1:5, key1 = letters[1:5])
+y <- data.frame(A = 3:6, key2 = letters[3:6])
+
+inner_join(x, y , by = c("key1" = "key2"))
+full_join(x, y, by = c("key1" = "key2"))
+left_join(x, y, by = c("key1" = "key2"))
+right_join(x, y, by = c("key1" = "key2"))
