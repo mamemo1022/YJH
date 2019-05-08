@@ -1,0 +1,74 @@
+# Missing Values ----------------------------------------------------------
+
+# Import packages
+if (!require(dlookr)) {install.packages("dlookr")}; require(dlookr)
+if (!require(Amelia)) {install.packages("Amelia")}; require(Amelia)
+if (!require(mice)) {install.packages("mice")}; require(mice)
+if (!require(DMwR)) {install.packages("DMwR")}; require(DMwR)
+
+# simple data
+df <- data.frame(A = c(1:5),
+                 B = c(letters[1:5]),
+                 C = c("x", "y", NA, "z", NA)); df
+# columns 별 NA 갯수 반
+colSums(is.na(df))
+# 단순히 NA 제거
+na.omit(df)
+# NA가 존재하는 행에 대해서 FALSE 반환
+complete.cases(df) # 3행, 5행에 NA 존재
+df[complete.cases(df), ]
+
+# other example
+colSums(is.na(airquality))
+
+# NA가 있는 행에 대해서만 indexing
+airquality[!complete.cases(airquality), ]
+
+# NA가 없는 행에 대해서만 indexing
+airquality[complete.cases(airquality), ]
+
+# Using "dlookr" package
+dlookr::find_na(airquality, rate = TRUE) # columns별 NA의 비율(proportion) 나타냄
+dlookr::diagnose(airquality) # 변수 별 NA 조사 결과를 summary하여 반환
+
+# Using "Amelia" package
+Amelia::missmap(airquality, main = "Missing Values Map", col = c("yellow", "grey"), legend = TRUE) # by plotting
+
+# Using "mice" package to replace the missing values
+head(airquality)
+dat <- airquality
+tempdat <- mice::mice(dat, maxit = 50, method = "pmm") # pmm, logreg, polyreg, polr
+summary(tempdat) 
+tempdat$imp$Ozone
+tempdat$imp$Solar.R
+
+fit <- with(data = tempdat, exp = lm(Ozone ~ Solar.R))
+fit
+
+combine <- mice::pool(fit)
+summary(combine)
+
+completedat <- mice::complete(tempdat, 1)
+summary(lm(Ozone ~ Solar.R, data = completedat))
+
+# Using "Amelia" package to replace the missing values
+dat <- airquality
+tempdat2 <- Amelia::amelia(x = dat, m = 5)
+summary(tempdat2)
+
+tempdat2$imputations[[1]]
+tempdat2$imputations[[2]]
+tempdat2$imputations[[1]]$Ozone
+tempdat2$imputations[[2]]$Ozone
+
+# Using "DMwR" package
+dat <- airquality
+colSums(is.na(airquality))
+
+# NA -> central value
+DMwR::centralImputation(dat)
+DMwR::centralValue(dat)
+
+# NA -> knn weighted mean, default k = 10
+DMwR::knnImputation(dat, k = 10)
+DMwR::knnImputation(dat, k = 5)
