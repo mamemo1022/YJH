@@ -1,0 +1,42 @@
+# Data Merging ------------------------------------------------------------
+
+# data
+x <- data.frame(A = 1:5, key = letters[1:5]); x
+y <- data.frame(A = 3:6, key = letters[3:6]); y
+
+# row/column bind
+rbind(x, y)
+cbind(x[1:4, ], y)
+
+# Using base function "merge"
+merge(x, y, by = "key") # inner join
+merge(x, y, by = "key", all = TRUE) # outer join
+merge(x, y, by = "key", all.x = TRUE) # left join
+merge(x, y, by = "key", all.y = TRUE) # right join
+
+# Using "dplyr" package
+
+if (!require(dplyr)) {install.packages("dplyr")}; require(dplyr)
+
+# data
+x <- data.frame(A = 1:5, key1 = letters[1:5]); x
+y <- data.frame(A = 3:6, key2 = letters[3:6]); y
+
+dplyr::inner_join(x, y , by = c("key1" = "key2"))
+dplyr::full_join(x, y, by = c("key1" = "key2"))
+dplyr::left_join(x, y, by = c("key1" = "key2"))
+dplyr::right_join(x, y, by = c("key1" = "key2"))
+
+# from data.frame to list, from list to data.frame by rbind()
+
+if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
+if (!require(data.table)) {install.packages("data.table")}; require(data.table)
+
+# data.frame to list
+splitdat <- split(ggplot2::diamonds, diamonds$cut)
+class(splitdat) # list
+
+# list to data.frame
+do.call("rbind", splitdat) 
+dplyr::rbind_list(splitdat)
+data.table::rbindlist(splitdat) # by "data.table" package
