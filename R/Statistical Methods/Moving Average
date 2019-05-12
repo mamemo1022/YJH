@@ -1,3 +1,5 @@
+# Moving Average
+
 # Method 1, able to control sides(1 or 2) 
 Moving.Avg <- function(x, n, sides) {stats::filter(x, rep(1/n, n), sides = sides)}
 Moving.Avg(x = 1:100, n = 5, sides = 1)
