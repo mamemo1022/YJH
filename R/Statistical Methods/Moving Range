@@ -1,0 +1,9 @@
+# Moving Range
+Moving.Range <- function(x, n){
+  st <- n + 1
+  en <- length(x) - n
+  idx <- st:en %>% lapply(function(x) seq(x - n, x + n))  
+  result <- idx %>% lapply(function(y) diff(range(x[y]))) %>% unlist()
+  c(rep(NA, n), result, rep(NA, n))
+}
+Moving.Range(x = 1:100, n = 5)
