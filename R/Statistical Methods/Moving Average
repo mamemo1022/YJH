@@ -1,0 +1,14 @@
+# Method 1, able to control sides(1 or 2) 
+Moving.Avg <- function(x, n, sides) {stats::filter(x, rep(1/n, n), sides = sides)}
+Moving.Avg(x = 1:100, n = 5, sides = 1)
+Moving.Avg(x = 1:100, n = 5, sides = 2)
+
+# Method 2, only 2 side (+-n)
+Moving.Avg <- function(x, n){
+  st <- n + 1
+  en <- length(x) - n
+  idx <- st:en %>% lapply(function(x) seq(x - n, x + n))  
+  result <- idx %>% lapply(function(y) x[y] %>% mean) %>% unlist()
+  c(rep(NA, n), result, rep(NA, n))
+}
+Moving.Avg(x = 1:100, n = 2)
