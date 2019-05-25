@@ -1,0 +1,62 @@
+# corrplot ----------------------------------------------------------------
+
+# import pakcage 
+if (!require(corrplot)) {install.packages("corrplot")}; require(corrplot)
+
+# 예제 data
+# correlation matrix (only continuous variables)
+mtcars_cor <- cor(mtcars)
+mtcars_cor
+
+# corrplot with numerous options
+corrplot::corrplot(mtcars_cor, method = "circle")
+corrplot::corrplot(mtcars_cor, method = "ellipse")
+corrplot::corrplot(mtcars_cor, method = "square")
+corrplot::corrplot(mtcars_cor, method = "shade")
+corrplot::corrplot(mtcars_cor, method = "number")
+corrplot::corrplot(mtcars_cor, method = "pie")
+corrplot::corrplot(mtcars_cor, 
+                   method = "shade",
+                   addshade = "all",
+                   tl.col = "black", # label color
+                   tl.srt = 30, # upper label angle
+                   diag = FALSE,
+                   addCoef.col = "yellow", # number color
+                   order = "FPC" # "FPC", "hclust", "AOE" - define variable's order
+)
+
+corrplot::corrplot(mtcars_cor, type = "upper") # upper triangle 
+corrplot::corrplot(mtcars_cor, type = "lower") # lower triangle
+
+# mix two types
+corrplot::corrplot.mixed(mtcars_cor)
+corrplot::corrplot.mixed(mtcars_cor, lower = "ellipse", upper = "circle")
+corrplot::corrplot.mixed(mtcars_cor, lower = "ellipse", upper = "shade")
+corrplot::corrplot.mixed(mtcars_cor, lower = "ellipse", upper = "number")
+
+# adjust variable's order
+corrplot::corrplot(mtcars_cor, order = "AOE")
+corrplot::corrplot(mtcars_cor, order = "hclust")
+corrplot::corrplot(mtcars_cor, order = "FPC")
+corrplot::corrplot(mtcars_cor, order = "alphabet")
+
+corrplot::corrplot(mtcars_cor, order = "hclust", addrect = 2) # addrect argument(especially apply on "hclust")
+
+# change the colors (random colors)
+col1 <- colorRampPalette(c("#7F0000", "red", "#FF7F00", "yellow", "white", "cyan", 
+                           "#007FFF", "blue", "#00007F"))
+col2 <- colorRampPalette(c("#67001F", "#B2182B", "#D6604D", "#F4A582", "#FDDBC7", 
+                           "#FFFFFF", "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC", "#053061"))
+col3 <- colorRampPalette(c("red", "white", "blue"))
+col4 <- colorRampPalette(c("#7F0000", "red", "#FF7F00", "yellow", "#7FFF7F", 
+                           "cyan", "#007FFF", "blue", "#00007F"))
+wb <- c("white", "black")
+
+corrplot::corrplot(mtcars_cor, order = "hclust", addrect = 2, col = col1(100))
+corrplot::corrplot(mtcars_cor, order = "hclust", addrect = 2, col = col2(50))
+corrplot::corrplot(mtcars_cor, order = "hclust", addrect = 2, col = col3(20))
+corrplot::corrplot(mtcars_cor, order = "hclust", addrect = 2, col = col4(10))
+corrplot::corrplot(mtcars_cor, order = "hclust", addrect = 2, col = wb, bg = "gold2")
+
+# remove the color legend & text legend
+corrplot::corrplot(mtcars_cor, cl.pos = "n", tl.pos = "n")
