@@ -1,0 +1,28 @@
+# residuals plot ----------------------------------------------------------
+
+# import packages
+if (!require(datasets)) {install.packages("datasets")}; require(datasets)
+
+# 예제 데이터
+data(swiss)
+str(swiss)
+head(swiss)
+
+# linear regression
+lm_fit <- lm(formula = Infant.Mortality ~ Fertility + Agriculture + Examination + Education + Catholic,
+             data = swiss)
+summary(lm_fit)
+
+# multicollinearity
+car::vif(lm_fit)
+
+# residuals plot for diagnosis
+std_residual <- rstandard(lm_fit) # standardized residuals
+range(std_residual)
+par(mfrow = c(2, 2))
+plot(std_residual, ylim = c(-4, 4))
+hist(std_residual)
+qqnorm(std_residual)
+qqline(std_residual, col = "red")
+plot(lm_fit$fitted.values, std_residual, ylim = c(-4, 4))
+abline(h = 0, col = "red")
