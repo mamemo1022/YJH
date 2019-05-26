@@ -1,4 +1,4 @@
-# Moving Range
+# Moving Range 
 Moving.Range <- function(x, n){
   st <- n + 1
   en <- length(x) - n
@@ -7,3 +7,13 @@ Moving.Range <- function(x, n){
   c(rep(NA, n), result, rep(NA, n))
 }
 Moving.Range(x = 1:100, n = 5)
+
+# Moving Range (ver2) n=lag
+Moving.Range <- function(x, n){
+  st <- n + 1
+  en <- length(x)
+  idx <- st:en %>% lapply(function(x) seq(x - n, x))  
+  result <- idx %>% lapply(function(y) diff(range(x[y]))) %>% unlist()
+  c(rep(NA, n), result)
+}
+Moving.Range(x = 1:100, n = 3)
