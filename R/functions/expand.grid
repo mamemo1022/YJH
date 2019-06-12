@@ -1,0 +1,33 @@
+# expand.grid -------------------------------------------------------------
+
+# vector의 조합 data.frame 생성
+expand.grid(letters[1:5], LETTERS[1:5]) # 5x5
+
+# examples, calculating the correlation coefficients of continuous variables and generating them as data.frame
+mtcars # all continuous variables
+names(mtcars)
+
+# method 1
+mtcars_cor <- cor(mtcars)
+mtcars_cor <- reshape2::melt(mtcars_cor)
+head(mtcars_cor)
+
+# method 2 (Correlation을 계산할 때는 method 1을 사용하는 것이 편하지만 다른 것을 계산할 때 method 2 유용)
+mtcars_cor2 <- expand.grid(Var1 = names(mtcars),
+                           Var2 = names(mtcars))
+mtcars_cor2$Correlations <- apply(mtcars_cor2, 1, function(x) cor(mtcars[[x[1]]], mtcars[[x[2]]]))
+head(mtcars_cor2)
+
+
+
+# "gtools" package combinations() & permutations() ------------------------
+
+# deduplication (nCr 조합 생성)
+mtcars_cor3 <- data.frame(gtools::combinations(n = length(names(mtcars)), r = 2, v = names(mtcars), repeats.allowed = TRUE))
+mtcars_cor3$Correlations <- apply(mtcars_cor3, 1, function(x) cor(mtcars[[x[1]]], mtcars[[x[2]]]))
+head(mtcars_cor3)
+
+# same result as expand.grid (nPr 순열 생성)
+mtcars_cor4 <- data.frame(gtools::permutations(n = length(names(mtcars)), r = 2, v = names(mtcars), repeats.allowed = TRUE))
+mtcars_cor4$Correlations <- apply(mtcars_cor4, 1, function(x) cor(mtcars[[x[1]]], mtcars[[x[2]]]))
+head(mtcars_cor4)
