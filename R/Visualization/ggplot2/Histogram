@@ -26,3 +26,9 @@ ggplot(diamonds) +
        y = "Density",
        title = "Histogram") +
   theme_bw()
+
+# cut변수 별 histogram (facet_grid 사용)
+ggplot(diamonds) + 
+  geom_histogram(aes(x = price), bins = 30, colour = "white", fill = "dodgerblue4") + 
+  theme_bw() +
+  facet_grid(~ cut)
