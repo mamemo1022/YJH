@@ -1,0 +1,49 @@
+options(scipen = 100)
+# scatter plot ------------------------------------------------------------
+
+# "ggplot2" package
+if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
+
+# 예제 데이터 
+data(diamonds)
+
+### x,y(numeric type) 변수의 산점도
+
+# x = carat, y = price
+ggplot(diamonds) + 
+  geom_point(aes(x = carat, y = price))
+
+# shape 인자는 point의 형태를 결정함
+ggplot(diamonds) + 
+  geom_point(aes(x = carat, y = price), shape = 15, colour = "dodgerblue4")
+
+# point의 형태에 따라 colour/fill 인자 설정을 달리 해야함
+ggplot(diamonds) + 
+  geom_point(aes(x = carat, y = price), shape = 21, colour = "dodgerblue4", fill = "darkblue")
+
+# x = carat, y = price, by = cat
+ggplot(diamonds) + 
+  geom_point(aes(x = carat, y = price, colour = cut))
+
+# x = carat, y = price, by = cat, change colour manully
+summary(diamonds$price); summary(diamonds$carat)
+ggplot(diamonds) + 
+  geom_point(aes(x = carat, y = price, colour = cut)) + 
+  scale_colour_manual(values = c("orange", "green4", "dodgerblue4", "#574182", "#A50034")) +
+  ylim(c(0, 20000)) +
+  labs(x = "carat",
+       y = "price",
+       title = "Scatter plot(price ~ carat)") +
+  theme_bw() + 
+  theme(axis.title = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        legend.position = c(0.85, 0.2),
+        legend.key.height = unit(0.5, "cm"),
+        legend.key.width = unit(0.3, "cm"),
+        legend.background = element_rect(colour = "black"))
+
+# facet_grid 이용하여 cut 별로 scatter plot 그리기
+ggplot(diamonds) +
+  geom_point(aes(x = carat, y = price), colour = "dodgerblue4") +
+  theme_bw() +
+  facet_grid(~ cut)
