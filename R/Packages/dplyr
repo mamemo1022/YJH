@@ -18,7 +18,7 @@ diamonds %>% group_by(cut) %>% summarise(n = n(),
                                          min = min(price),
                                          max = max(price),
                                          median = median(price),
-                                         mean = median(price),
+                                         mean = mean(price),
                                          sd = sd(price),
                                          q1 = quantile(price, 0.25),
                                          q3 = quantile(price, 0.75))
@@ -34,7 +34,24 @@ diamonds %>% select(1:4)
 diamonds %>% select(contains("c")) # "c"를 포함하는 변수들 선택
 diamonds %>% select(starts_with("c")) # "c"로 시작하는 변수들 선택
 diamonds %>% select(ends_with("e")) # "e"로 끝나는 변수들 선택
+diamonds %>% select(matches("c")) # "c"를 포함하는 변수들 선택
+diamonds %>% select(matches("^c")) # "c"로 시작하는 변수들 선택
+diamonds %>% select(last_col()) # 마지막 열에 해당하는 변수 선택
 diamonds %>% select(x, y, z, everything()) # 순서 바꾸기
+
+diamonds %>% select_all(toupper) # 변수명 대문자로 변경
+diamonds %>% select_all("toupper")
+diamonds %>% select_all(tolower) # 변수명 소문자로 변경
+diamonds %>% select_all("tolower")
+
+diamonds %>% select_if(is.numeric) # "numeric" 변수들만 선택
+diamonds %>% select_if(is.factor) # "factor" 변수들만 선택
+diamonds %>% select_if(is.numeric, toupper) # "numeric" 변수들만 변수명 대문자로 변경
+diamonds %>% select_if(is.factor, toupper) # "factor" 변수들만 변수명 대문자로 변경
+diamonds %>% select_if(is.factor, Hmisc::capitalize) # "factor" 변수들만 변수명 첫글자를 대문자로 변경
+
+diamonds %>% select_at(vars(-(1:3)), toupper) # 1~3번째 변수 제외하고 변수명 대문자로 변경
+diamonds %>% select_at(-c(1:3), tolower)
 
 # 기준에 따른 subsetting
 diamonds %>% filter(cut == "Premium" & color == "E")
@@ -60,6 +77,13 @@ df3 <- rename(df1,
               X = x,
               Y = y,
               Z = z); df3
+
+rename_all(diamonds, toupper) # 모든 변수명 대문자로 변경
+
+rename_if(diamonds, is.numeric, toupper) # "numeric" 변수들만 변수명 대문자로 변경
+rename_if(diamonds, is.factor, toupper) # "factor" 변수들만 변수명 소문자로 변경
+
+rename_at(diamonds, 1:3, toupper) # 1~3번째 변수들만 변수명 대문자로 변경
 
 # packages의 충돌로 dplyr 내장 함수가 작동안하는 경우 대안
 select <- dplyr::select
