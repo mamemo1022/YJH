@@ -1,0 +1,130 @@
+options(scipen = 100)
+
+# Edit Legend -------------------------------------------------------------
+
+# "ggplot2" package
+if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
+
+# 예제 데이터 
+data(iris)
+head(iris)
+
+### Scatter plot with x(Petal.Length), y(Sepal.Length), colour(Species)
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw()
+
+
+
+# change the legend name
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  labs(colour = "new name!!!") +
+  theme_bw()
+
+
+
+# change the legend position, c(#, #) 형태로 지정 x축(0~1), y축(0~1) 
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = c(0.85, 0.2)) # two-element numeric vector
+
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = "none") # none legend
+
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = "left") # left
+
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = "right") # right
+
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = "top") # top
+
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = "bottom") # bottom
+
+
+
+# change the legend key size/height/width
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = c(0.85, 0.2),
+        legend.key.size = unit(1.5, "cm")) # key size
+
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = c(0.85, 0.2),
+        legend.key.height = unit(1.5, "cm")) # key height
+
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = c(0.85, 0.2),
+        legend.key.width = unit(1.5, "cm")) # key width
+
+
+
+# change the legend background
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() +
+  theme(legend.background = element_rect(colour = "black", fill = "yellow", size = 0.5, linetype = "dashed")) # background options
+
+
+
+# change the legend title/text
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() +
+  theme(legend.title = element_text(size = 12, colour = "deeppink4", face = "bold"),
+        legend.text = element_text(size = 10, colour = "darkblue", face = "italic", angle = 12)) # face = plain/bold/italic/bold.italic
+
+ 
+
+# change the legend box
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() +
+  theme(legend.box.background = element_rect(colour = "black", linetype = "dotted", size = 1.2))
+
+
+
+# change all
+ggplot(iris) +
+  geom_point(aes(x = Petal.Length, y = Sepal.Length, colour = Species)) +
+  scale_colour_manual(values = c("#A50034", "orange", "dodgerblue4")) +
+  theme_bw() + 
+  theme(legend.position = c(0.85, 0.2),
+        legend.key.height = unit(0.5, "cm"),
+        legend.key.width = unit(0.3, "cm"),
+        legend.background = element_rect(colour = "black", fil = "yellow", linetype = "dotdash"),
+        legend.title = element_text(size = 12, face = "italic"),
+        legend.text = element_text(size = 10, colour = "black", face = "bold"))
