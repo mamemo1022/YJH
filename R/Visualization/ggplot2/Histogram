@@ -7,7 +7,8 @@ if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
 # 예제 데이터 
 data(diamonds)
 
-# histogram with price
+### histogram with price
+
 # bins나 binwidth를 조절
 
 # count
