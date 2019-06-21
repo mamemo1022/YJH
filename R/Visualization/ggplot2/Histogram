@@ -1,0 +1,28 @@
+options(scipen = 100)
+# Histogram ---------------------------------------------------------------
+
+# "ggplot2" package
+if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
+
+# 예제 데이터 
+data(diamonds)
+
+# histogram with price
+# bins나 binwidth를 조절
+
+# count
+ggplot(diamonds) + 
+  geom_histogram(aes(x = price), bins = 30, colour = "white", fill = "dodgerblue4") + 
+  labs(x = "price",
+       y = "Density",
+       title = "Histogram") +
+  theme_bw()
+
+# density
+ggplot(diamonds) +
+  geom_histogram(aes(x = price, y = ..density..), bins = 30, colour = "white", fill = "dodgerblue4") +
+  geom_density(aes(x = price), colour = "deeppink4", lwd = 1) + 
+  labs(x = "price",
+       y = "Density",
+       title = "Histogram") +
+  theme_bw()
