@@ -1,0 +1,192 @@
+# broom -------------------------------------------------------------------
+
+# three distinct kinds of tidying
+# 1. tidy : 모델의 통계적 결과물을 요약한 데이터 프레임 구성 (coefficients, p-values etc..)
+# 2. augment : 모델 결과에 대한 정보를 열로써 데이터 프레임에 추가 (predictions, residuals, and cluster assignments etc..)
+# 3. glance : 모델의 하나의 행으로 구성된 요약 형태 (R^2, adjusted R^2, and RSE etc..)
+
+# import packages
+if (!require(broom)) {install.packages("broom")}; require(broom)
+if (!require(tibble)) {install.packages("tibble")}; require(tibble)
+if (!require(dplyr)) {install.packages("dplyr")}; require(dplyr)
+if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
+if (!require(tidyr)) {install.packages("tidyr")}; require(tidyr)
+if (!require(purrr)) {install.packages("purrr")}; require(purrr)
+
+# 예제 데이터
+mtcars
+
+# Linear Regression
+lm_fit <- lm(mpg ~ disp + wt, data = mtcars)
+lm_fit
+summary(lm_fit)
+
+# 기존 방식의 모델 결과물 matrix 반환 방식, rownames & colnames 문제
+coef(summary(lm_fit))
+
+# "broom" package 사용
+tidy(lm_fit)
+class(tidy(lm_fit)) # data.frame
+
+augment(lm_fit)
+
+glance(lm_fit)
+
+
+
+# broom + dplyr -----------------------------------------------------------
+
+# 예제 데이터
+data(Orange)
+Orange <- as_tibble(Orange)
+Orange
+
+# correlation with total data & group_by(Tree) data
+cor(Orange$age, Orange$circumference) # 0.9135189
+
+ggplot(Orange) +
+  geom_line(aes(x = age, y = circumference, colour = Tree))
+
+Orange %>% 
+  group_by(Tree) %>% 
+  summarise(correlation = cor(age, circumference))
+
+# correlation test
+ct <- cor.test(Orange$age, Orange$circumference)
+ct
+tidy(ct)
+
+# multiple tests each on a different part of the data (using nest-map-unnest)
+# method 1
+Orange %>% 
+  nest(-Tree) %>% 
+  mutate(test = map(data, ~ cor.test(.x$age, .x$circumference)),
+                  tidied = map(test, tidy)) %>% 
+  unnest(tidied, .drop = TRUE) # .drop argument to tidyr::unnest is useful
+
+# method 2
+Orange %>% 
+  group_by(Tree) %>% 
+  do(tidy(cor.test(.$age, .$circumference)))
+
+# regression with total data & group_by(Tree) data
+# regression
+lm_fit <- lm(age ~ circumference, data = Orange)
+summary(lm_fit)
+tidy(lm_fit)
+
+# multiple regressions
+# method 1
+Orange %>% 
+  nest(-Tree) %>% 
+  mutate(fit = map(data, ~ lm(age ~ circumference, data = .x)),
+         tidied = map(fit, tidy)) %>% 
+  unnest(tidied)
+
+# method 2
+Orange %>% 
+  group_by(Tree) %>% 
+  do(tidy(lm(age ~ circumference, data=.)))
+
+
+# mtcars 데이터 예제
+mtcars <- as_tibble(mtcars)
+mtcars
+
+# method 1
+regressions <- mtcars %>% 
+  nest(-am) %>% 
+  mutate(fit = map(data, ~ lm(mpg ~ disp + wt + qsec, data = .x)),
+         tidied = map(fit, tidy),
+         glanced = map(fit, glance),
+         augmented = map(fit, augment))
+regressions
+regressions %>% unnest(tidied)
+regressions %>% unnest(glanced, .drop = TRUE)
+regressions %>% unnest(augmented)
+
+# method 2
+regressions <- mtcars %>% 
+  group_by(am) %>% 
+  do(fit = lm(mpg ~ disp + wt + qsec, data = .))
+regressions %>% tidy(fit)
+regressions %>% glance(fit)
+regressions %>% augment(fit)
+
+
+
+# k-means clustering with broom + dplyr -----------------------------------
+
+# 예제 데이터
+iris
+iris_num <- iris %>% select_if(is.numeric)
+
+ggplot(iris) +
+  geom_point(aes(x = Sepal.Length, y = Sepal.Width, colour = Species))
+
+# k-means
+kclust <- kmeans(iris_num, centers = 3)
+kclust
+tidy(kclust)
+glance(kclust)
+augment(kclust, iris)
+
+# explore the effect of different choices of k -> finding optimal k
+# method 1
+kclusts <- tibble(k = 1:9) %>%
+  mutate(kclust = map(k, ~ kmeans(iris_num, .x)),
+         tidied = map(kclust, tidy),
+         glanced = map(kclust, glance),
+         augmented = map(kclust, augment, iris_num))
+kclusts
+
+clusters <- kclusts %>%
+  unnest(tidied)
+
+assignments <- kclusts %>% 
+  unnest(augmented)
+
+clusterings <- kclusts %>%
+  unnest(glanced, .drop = TRUE)
+
+ggplot(assignments) +
+  geom_point(aes(x = Sepal.Length, y = Sepal.Width, colour = .cluster)) + 
+  facet_wrap(~ k)
+ggplot(assignments) +
+  geom_point(aes(x = Sepal.Length, y = Sepal.Width, colour = .cluster)) + 
+  geom_point(data = clusters, aes(x = x1, y = x2), size = 10, shape = "x") +
+  facet_wrap(~ k)
+
+# optimal k
+ggplot(clusterings) +
+  geom_line(aes(k, tot.withinss))
+
+# method 2
+kclusts <- data.frame(k = 1:9) %>% 
+  group_by(k) %>% 
+  do(kclust = kmeans(iris_num, centers = .$k)) %>% 
+  ungroup()
+
+clusters <- kclusts %>% 
+  group_by(k) %>% 
+  do(tidy(.$kclust[[1]]))
+
+assignments <- kclusts %>% 
+  group_by(k) %>% 
+  do(augment(.$kclust[[1]], iris_num))
+
+clusterings <- kclusts %>% 
+  group_by(k) %>% 
+  do(glance(.$kclust[[1]]))
+
+ggplot(assignments) +
+  geom_point(aes(x = Sepal.Length, y = Sepal.Width, colour = .cluster)) + 
+  facet_wrap(~ k)
+ggplot(assignments) +
+  geom_point(aes(x = Sepal.Length, y = Sepal.Width, colour = .cluster)) + 
+  geom_point(data = clusters, aes(x = x1, y = x2), size = 10, shape = "x") +
+  facet_wrap(~ k)
+
+# optimal k
+ggplot(clusterings) +
+  geom_line(aes(k, tot.withinss))
