@@ -1,0 +1,91 @@
+# dummy variables ---------------------------------------------------------
+
+# data
+head(iris)
+str(iris) # Factor Species 
+
+
+
+# Method1 "fastDummies" package -------------------------------------------
+
+if (!require(fastDummies)) {install.packages("fastDummies")}; require(fastDummies)
+
+results <- fastDummies::dummy_cols(iris)
+head(results)
+
+# include Species variable
+head(fastDummies::dummy_cols(.data = iris, select_columns = "Species"))
+
+# remove first dummy variable
+head(fastDummies::dummy_cols(.data = iris, select_columns = "Species", remove_first_dummy = T))
+
+
+
+# Method2 "dummies" package -----------------------------------------------
+
+if (!require(dummies)) {install.packages("dummies")}; require(dummies)
+
+LETTERS
+dummies::dummy(LETTERS)
+dummies::dummy(LETTERS, sep = ":") # assign column names
+dummies::dummy(LETTERS, sep = "_") # assign column names
+dummies::dummy(LETTERS, fun = as.logical) # not 0/1, logical format 
+
+head(dummies::dummy(x = "Species", data = iris, sep = "_")) # Species -> 3 dummy variables
+head(dummies::dummy.data.frame(data = iris, dummy.classes = "factor"))
+
+head(dummies::dummy.data.frame(data = iris, all = TRUE)) # return all data.frame
+head(dummies::dummy.data.frame(data = iris, all = FALSE)) # return only dummy columns
+
+
+
+# Method3 "mlr" package ---------------------------------------------------
+
+if (!require(mlr)) {install.packages("mlr")}; require(mlr)
+
+head(mlr::createDummyFeatures(obj = iris, method = "1-of-n", cols = "Species"))
+head(mlr::createDummyFeatures(obj = iris, method = "reference", cols = "Species")) # drop first level of factor variable
+
+
+
+# Method4 "caret" package -------------------------------------------------
+
+if (!require(caret)) {install.packages("caret")}; require(caret)
+
+dummy_vars <- caret::dummyVars(~ Species, data = iris) # make dummy object
+head(predict(dummy_vars, iris)) # return dummy variables format
+
+
+
+# Method5 "recipes" package -----------------------------------------------
+
+if (!require(recipes)) {install.packages("recipes")}; require(recipes)
+
+rec <- recipe( . ~ Species, data = iris)
+
+# return only dummy variables
+rec %>% 
+  step_dummy(Species, one_hot = TRUE) %>% 
+  prep(training = iris) %>% 
+  juice(starts_with("Species"))
+
+# return full data.frame
+rec %>% 
+  step_dummy(Species, one_hot = TRUE) %>% 
+  prep(training = iris) %>% 
+  juice()
+
+
+
+# Method6 make function ---------------------------------------------------
+
+# make a function
+make_dummies <- function(v, prefix = '') {
+  s <- sort(unique(v))
+  d <- outer(v, s, function(v, s) 1L * (v == s))
+  colnames(d) <- paste(prefix, s, sep = "_")
+  d
+}
+
+# bind the dummies to the original dataframe
+head(data.frame(cbind(iris, make_dummies(iris$Species, prefix = 'Species'))))
