@@ -17,12 +17,15 @@ summary(lm_fit)
 car::vif(lm_fit)
 
 # residuals plot for diagnosis
-std_residual <- rstandard(lm_fit) # standardized residuals
-range(std_residual)
-par(mfrow = c(2, 2))
-qqnorm(std_residual)
-qqline(std_residual, col = "red")
-plot(lm_fit$fitted.values, std_residual, ylim = c(-5, 5), xlab = "Fitted Values", ylab = "Standardized Residuals")
-hist(std_residual, xlab = "Standardized Residuals")
-plot(std_residual, ylim = c(-5, 5), ylab = "Standardized Residuals")
-abline(h = 0, col = "red")
+residuals_plot <- function(lm_object) {
+  std_residual <- rstandard(lm_object) # standardized residuals
+  range(std_residual)
+  par(mfrow = c(2, 2))
+  qqnorm(std_residual)
+  qqline(std_residual, col = "red")
+  plot(lm_object$fitted.values, std_residual, ylim = c(-max(abs(range(std_residual))), max(abs(range(std_residual)))))
+  hist(std_residual)
+  plot(std_residual, ylim = c(-max(abs(range(std_residual))), max(abs(range(std_residual)))))
+  abline(h = 0, col = "red")
+}
+residuals_plot(lm_fit)
