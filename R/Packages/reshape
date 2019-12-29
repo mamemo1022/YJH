@@ -1,0 +1,104 @@
+# reshape -----------------------------------------------------------------
+
+# import packages
+if (!require(reshape)) {install.packages("reshape")}; require(reshape)
+if (!require(dplyr)) {install.packages("dplyr")}; require(dplyr)
+
+# 예제 data
+head(airquality, 10)
+
+names(airquality) <- tolower(names(airquality))
+aqm <- melt(airquality, id = c("month", "day"), na.rm = TRUE)
+head(aqm, 10)
+
+
+# melt
+# data.frame format
+head(melt(airquality), 10)
+head(melt(airquality, id = c("month", "day")), 10)
+
+# array format
+array(1:24, c(2, 3, 4))
+head(melt(array(1:24, c(2, 3, 4)), varnames = c("X", "Y", "Z")))
+
+
+# cast
+cast(aqm, day ~ month ~ variable) # variable에 따라 day ~ month 
+cast(aqm, month ~ variable, mean) # month별 variable(변수)의 평균 
+cast(aqm, month ~ . | variable, mean) # array로 반환, month별 variable(변수)의 평균
+cast(aqm, month ~ variable, mean, margins = c("grand_row", "grand_col")) # 행/열 marginal mean 반환
+cast(aqm, day ~ month, mean, subset = variable == "ozone") # "ozone"에 해당하는 variable에 대해 day ~ month 평균 반환
+cast(aqm, month ~ variable, range) # month별로 variable(변수)의 범위 반환
+cast(aqm, month ~ variable + result_variable, range)
+cast(aqm, variable ~ month ~ result_variable, range) # 범위값(X1, X2)에 해당하는 값에서의 variable ~ month
+
+
+# colsplit
+df <- airquality %>% mutate(month_day = paste(month, day, sep = "_"))
+
+# 특정 열을 기준에 따라 여러 열로 split 해주는 역할
+colsplit(df$month_day, split = "_", names = c("month", "day"))
+
+
+# combine_factor
+head(aqm, 10)
+levels(aqm$variable) # 4 levels
+
+combine_factor(fac = aqm$variable, variable = c(1:3, 1)) # temp -> ozone으로 변경
+combine_factor(fac = aqm$variable, variable = c(1, 2, 3, 3)) # temp -> wind으로 변경
+combine_factor(fac = aqm$variable, variable = c(1, 2, 3), other.label = "new_levels") # temp -> new_levels으로 변경
+
+
+# expand.grid.df
+# data.frame간의 모든 수준 조합을 포함하는 새로운 data.frame 생성
+expand.grid.df(data.frame(lower = letters[1:10], upper = LETTERS[1:10]), 
+               data.frame(lower = letters[1:10], upper = LETTERS[1:10]), 
+               unique = T) # 10x10
+
+expand.grid.df(data.frame(lower = letters[1:10], upper = LETTERS[1:10]), 
+               data.frame(lower = letters[1:10], upper = LETTERS[1:10]), 
+               data.frame(lower = letters[1:10], upper = LETTERS[1:10]), 
+               unique = T) # 10x10x10
+
+
+# funstofun
+# 여러 functions을 하나의 outputs vector로 반환
+funstofun(length, min, median, max, mean, var) (airquality$temp)
+
+
+# namerows
+# row names를 가지고 있는 data.frame의 경우 그 rownames를 새로운 column으로 생성
+head(mtcars, 10)
+rownames(mtcars)
+namerows(mtcars, col.name = "id")
+
+
+# rename
+head(df, 10)
+reshape::rename(df, replace = c(month = "월", day = "일"))
+
+
+# rescaler
+rescaler(airquality$temp, type = "I") # 값 변화x
+rescaler(airquality$temp, type = "sd") # (x-mean)/sd
+rescaler(airquality$temp, type = "range") # (x-min)/(max-min), [0, 1]
+rescaler(airquality$temp, type = "rank") # convert values to ranks
+rescaler(airquality$temp, type = "robust") # robust version of sd, (x-median)/(median absolute deviation)
+
+
+# sort_df
+sort_df(airquality, vars = "month")
+sort_df(airquality, vars = "day")
+sort_df(airquality, vars = c("month", "day"))
+
+
+# sparseby
+# tapply or by와 유사한 기능하는데 연산 속도와 메모리상에서 더 효율적임
+sparseby(airquality, airquality$month, nrow)
+sparseby(airquality, airquality$month, mean) # do not work, mean()은 vector에 대한 연산이기 때문
+
+
+# untable
+untable(airquality, num = 2) # data.frame 두 번 반복
+untable(matrix(1:24, nrow = 6), num = 2) # matrix 두 번 반복
+
