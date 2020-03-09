@@ -1,0 +1,179 @@
+# dtplyr ------------------------------------------------------------------
+
+# import packages
+if (!require(dplyr)) {install.packages("dplyr")}; require(dplyr)
+if (!require(data.table)) {install.packages("data.table")}; require(data.table)
+if (!require(dtplyr, warn.conflicts = FALSE)) {install.packages("dtplyr")}; require(dtplyr, warn.conflicts = FALSE)
+if (!require(broom)) {install.packages("broom")}; require(broom)
+if (!require(tibble)) {install.packages("tibble")}; require(tibble)
+if (!require(purrr)) {install.packages("purrr")}; require(purrr)
+if (!require(nycflights13)) {install.packages("nycflights13")}; require(nycflights13)
+if (!require(microbenchmark)) {install.packages("microbenchmark")}; require(microbenchmark)
+if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
+
+# 예제 data
+mtcars
+iris
+
+
+### group_modify
+# head 2
+mtcars %>%
+  group_modify(~ head(.x, 2L))
+
+# head 4
+mtcars %>%
+  group_modify(~ head(.x, 4))
+
+# cyl 별로 head 2, group_map은 list로 결과 반환
+mtcars %>%
+  group_by(cyl) %>%
+  group_map(~ head(.x, 2L))
+
+# cyl 별로 head 2, group_modify는 tibble로 결과 반환
+mtcars %>%
+  group_by(cyl) %>%
+  group_modify(~ head(.x, 2L))
+
+# iris 데이터에서 Species별로 lienar regression한 요약 결과 list 형태로 반환
+iris %>%
+  group_by(Species) %>%
+  group_map(~ broom::tidy(lm(Petal.Length ~ Sepal.Length, data = .x)))
+
+# iris 데이터에서 Species별로 lienar regression한 요약 결과 tibble 형태로 반환
+iris %>%
+  group_by(Species) %>%
+  group_modify(~ broom::tidy(lm(Petal.Length ~ Sepal.Length, data = .x)))
+
+# iris 데이터에서 Species별 Petal.Length의 분위수 반환 list 형태
+iris %>%
+  group_by(Species) %>%
+  group_map(~ quantile(.x$Petal.Length, probs = c(0.25, 0.5, 0.75)))
+
+# iris 데이터에서 Species별 Petal.Length의 분위수 반환 tibble 형태
+iris %>%
+  group_by(Species) %>%
+  group_modify(~ {
+    quantile(.x$Petal.Length, probs = c(0.25, 0.5, 0.75)) %>%
+      tibble::enframe(name = "prob", value = "quantile") # group_modify 사용을 위해 필요
+  })
+
+# iris 데이터에서 Species 별로 변수들의 다섯수치 요약 결과 반환
+iris %>%
+  group_by(Species) %>%
+  group_modify(~ {
+    .x %>%
+      purrr::map_dfc(fivenum) %>%
+      mutate(nms = c("min", "Q1", "median", "Q3", "max"))
+  })
+
+
+### lazy_dt
+# This allows dtplyr to convert dplyr verbs into as few data.table expressions as possible, which leads to a high performance translation
+
+# mtcars
+mtcars2 <- lazy_dt(mtcars)
+mtcars2 # list 형태
+mtcars2$parent # "data.table" "data.frame"
+mtcars2$vars # 변수명 
+
+mtcars2 %>% select(mpg:hp)
+mtcars2 %>% select(mpg, hp, wt)
+mtcars2 %>% select(x = mpg, y = cyl) # 변수명을 바꾸어 반환
+mtcars2 %>% filter(cyl == 4) %>% select(mpg)
+
+mtcars2 %>% select(mpg, cyl) %>% filter(cyl == 4)
+mtcars2 %>% mutate(cyl2 = cyl * 2, cyl4 = cyl2 * 2)
+mtcars2 %>% transmute(cyl2 = cyl * 2, vs2 = vs * 2) # 새로 변수를 생성하며 기존의 변수는 drop
+mtcars2 %>% filter(cyl == 8) %>% mutate(cyl2 = cyl * 2)
+
+mtcars2 %>% group_by(cyl) %>% summarise(mpg = mean(mpg))
+mtcars2 %>% group_by(cyl) %>% mutate(mpg = mean(mpg))
+mtcars2 %>% group_by(cyl) %>% filter(mpg < mean(mpg)) %>% summarise(hp = mean(hp))
+
+# iris
+iris2 <- lazy_dt(iris)
+iris2$parent
+iris2$vars
+
+iris2 %>% group_by(Species) %>% summarise(mean = mean(Sepal.Length),
+                                          sd = sd(Sepal.Length),
+                                          var = var(Sepal.Length),
+                                          min = min(Sepal.Length),
+                                          max = max(Sepal.Length),
+                                          median = median(Sepal.Length))
+
+
+### 속도 비교 (dplyr vs dtplyr vs data.table)
+data <- flights # 336776 obs x 19 variables
+df_dt <- data.table(data)
+df_dp <- as_tibble(data)
+df_dtp <- lazy_dt(data)
+summary(df_dt)
+summary(df_dp)
+summary(df_dtp)
+
+results <- microbenchmark(
+  `data.table` = df_dt[origin == 'JFK' & carrier == 'AA'] ,
+  `dplyr` = df_dp %>% filter(origin == 'JFK' & carrier == 'AA'),
+  `dtplyr` = df_dtp %>% filter(origin == 'JFK' & carrier == 'AA') %>% as_tibble(),
+  times = 100)
+results
+
+# data.table > dtplyr > dplyr
+autoplot(results) +
+  aes(fill = expr) +
+  theme_bw() +
+  labs(title = "Filter")
+
+# 각 패키지 별로 데이터의 요약 값 반환 속도 비교
+results2 <- microbenchmark(
+  `data.table` = df_dt[, .(mean_delay = mean(dep_delay, na.rm = TRUE)),
+                       by = c('year', 'month', 'day', 'carrier', 'origin')][mean_delay >= 10],
+  `dplyr` = df_dp %>%
+    group_by(year, month, day, carrier, origin) %>%
+    summarize(mean_delay = mean(dep_delay, na.rm = TRUE)) %>%
+    ungroup() %>%
+    filter(mean_delay >= 10),
+  `dtplyr` = df_dtp %>%
+    group_by(year, month, day, carrier, origin) %>%
+    summarize(mean_delay = mean(dep_delay, na.rm = TRUE)) %>%
+    ungroup() %>%
+    filter(mean_delay >= 10) %>%
+    as_tibble(),
+  times = 100)
+results2
+
+# data.table > dtplyr > dplyr
+autoplot(results2) +
+  aes(fill = expr) +
+  theme_bw() +
+  labs(title = "group_by, mean, filter")
+
+# 각 패키지 별로 데이터의 요약 값 반환 속도 비교
+results3 <- microbenchmark(
+  `data.table` = df_dt[, .(max_distance = max(distance, na.rm = T),
+                           min_distance = min(distance, na.rm = T),
+                           mean_distance = mean(distance, na.rm = T)),
+                       by = c("year", "month", "day", "carrier", "origin")],
+  `dplyr` = df_dp %>% 
+    group_by(year, month, day, carrier, origin) %>% 
+    summarise(max_distance = max(distance, na.rm = T),
+              min_distance = min(distance, na.rm = T),
+              mean_distance = mean(distance, na.rm = T)) %>% 
+    ungroup(),
+  `dtplyr` = df_dtp %>% 
+    group_by(year, month, day, carrier, origin) %>% 
+    summarise(max_distance = max(distance, na.rm = TRUE), # TRUE로 입력하지 않고 T로 입력하면 연산과정에서 오류 발생!
+              min_distance = min(distance, na.rm = TRUE),
+              mean_distance = mean(distance, na.rm = TRUE)) %>% 
+    ungroup() %>% 
+    as_tibble(),
+  times = 100)
+results3
+
+autoplot(results3) +
+  aes(fill = expr) +
+  scale_fill_manual(values = c("darkblue", "#A50034", "gold")) +
+  labs(title = "group_by, summary(min,max,mean)") +
+  theme_bw()
