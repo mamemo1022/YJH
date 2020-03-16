@@ -7,10 +7,12 @@ if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
 # 예제 data
 head(diamonds, 10)
 
+
 # "cut" 변수 별 data 갯수
 diamonds %>% group_by(cut) %>% tally()
 
 diamonds %>% count(cut)
+
 
 # diamonds data "cut" 변수 별 통계량
 diamonds %>% group_by(cut) %>% summarise(n = n(),
@@ -23,9 +25,19 @@ diamonds %>% group_by(cut) %>% summarise(n = n(),
                                          q1 = quantile(price, 0.25),
                                          q3 = quantile(price, 0.75))
 
-# 사용할 변수 선택 및 "price" 변수 기준으로 데이터 정렬
+# summarise_at(), vars()안에서 starts_with()와 같은 함수 사용 가능
+diamonds %>% group_by(cut) %>% summarise_at(vars(carat, price), list(n_distinct, min, max, median, mean, sd))
+diamonds %>% group_by(cut) %>% summarise_at(vars(carat, price), list(n_distinct = n_distinct, min = min, max = max, median = median, mean = mean, sd = sd))
+
+# mutate_at(), vars()안에서 starts_with()와 같은 함수 사용 가능
+diamonds %>% group_by(cut) %>% mutate_at(vars(carat, price), list(min_rank, cume_dist))
+diamonds %>% group_by(cut) %>% mutate_at(vars(carat, price), list(min_rank = min_rank, cume_dist = cume_dist))
+
+
+# arrange(), 사용할 변수 선택 및 "price" 변수 기준으로 데이터 정렬 
 diamonds %>% select(cut, carat, price) %>% arrange(price)
 diamonds %>% select(cut, carat, price) %>% arrange(desc(price))
+
 
 # 변수 subsetting
 names(diamonds)
@@ -36,6 +48,7 @@ diamonds %>% select(starts_with("c")) # "c"로 시작하는 변수들 선택
 diamonds %>% select(ends_with("e")) # "e"로 끝나는 변수들 선택
 diamonds %>% select(matches("c")) # "c"를 포함하는 변수들 선택
 diamonds %>% select(matches("^c")) # "c"로 시작하는 변수들 선택
+diamonds %>% select(one_of("carat", "CUT", "PRICE")) # “carat”, “CUT”, “PRICE” 중 어느 하나라도 해당하는 변수를 선택
 diamonds %>% select(last_col()) # 마지막 열에 해당하는 변수 선택
 diamonds %>% select(x, y, z, everything()) # 순서 바꾸기
 
@@ -53,23 +66,26 @@ diamonds %>% select_if(is.factor, Hmisc::capitalize) # "factor" 변수들만 변
 diamonds %>% select_at(vars(-(1:3)), toupper) # 1~3번째 변수 제외하고 변수명 대문자로 변경
 diamonds %>% select_at(-c(1:3), tolower)
 
-# 기준에 따른 subsetting
+
+# 기준에 따른 값 subsetting
 diamonds %>% filter(cut == "Premium" & color == "E")
+
 
 # compare that data.frames are wheter equal or not
 df1 <- diamonds
 df2 <- diamonds
 
+# data.frame 동일 여부 비교
 all_equal(df1, df2, ignore_col_order = T, ignore_row_order = T) # TRUE
 
-# cbind
+# cbind & rbind
 bind_cols(df1, df2)
-
-# rbind
 bind_rows(df1, df2)
+
 
 # unique한 값을 가지는 data.frames
 distinct(diamonds)
+
 
 # 변수명 변경
 df3 <- rename(df1,
@@ -85,8 +101,29 @@ rename_if(diamonds, is.factor, toupper) # "factor" 변수들만 변수명 소문
 
 rename_at(diamonds, 1:3, toupper) # 1~3번째 변수들만 변수명 대문자로 변경
 
-# packages의 충돌로 dplyr 내장 함수가 작동안하는 경우 대안
-select <- dplyr::select
+
+# 6 variations on ranking functions
+x <- c(5, 1, 3, 2, 2, NA)
+row_number(x) # same as rank(ties.method = "first"), return the sample ranks of the values
+min_rank(x) # same as rank(ties.method = "min")
+dense_rank(x) # min_rank with no gaps between ranks
+percent_rank(x) # rescailing min_rank to [0,1]
+cume_dist(x) # a cumulative distribution function (proportion)
+ntile(x, 2) # a rough rank
+
+row_number(diamonds$price) 
+rank(diamonds$price, ties.method = "first")
+sum(row_number(diamonds$price) != rank(diamonds$price, ties.method = "first")) # 0
+
+min_rank(diamonds$price) 
+rank(diamonds$price, ties.method = "min")
+
+dense_rank(diamonds$price)
+
+cume_dist(diamonds$price)
+
+ntile(diamonds$price, 2)
+
 
 # data merging
 x <- data.frame(A = 1:5, key1 = letters[1:5])
@@ -96,3 +133,7 @@ inner_join(x, y , by = c("key1" = "key2"))
 full_join(x, y, by = c("key1" = "key2"))
 left_join(x, y, by = c("key1" = "key2"))
 right_join(x, y, by = c("key1" = "key2"))
+
+
+# packages의 충돌로 dplyr 내장 함수가 작동안하는 경우 대안
+select <- dplyr::select
