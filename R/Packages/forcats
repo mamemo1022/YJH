@@ -1,0 +1,46 @@
+# forcats -----------------------------------------------------------------
+
+if (!require(forcats)) {install.packages("forcats")}; require(forcats)
+
+# 예제 데이터
+head(forcats::gss_cat) # "forcats" 내장 데이터
+iris$Species
+letters
+
+
+# as_factor()
+class(letters) # "character"
+class(as_factor(letters)) # "factor"
+
+
+# fct_anon(), factor level을 임의 숫자로 변경
+fct_anon(gss_cat$marital)
+levels(fct_anon(gss_cat$marital)) # "1" "2" "3" "4" "5" "6"
+
+fct_anon(gss_cat$marital, prefix = "label") # level명 앞에 붙일 문자 설정
+levels(fct_anon(gss_cat$marital, prefix = "label")) # "label1" "label2" "label3" "label4" "label5" "label6"
+
+
+# fct_c(), concatenate factors with combining levels
+gss_cat$marital
+gss_cat$race
+fct_c(gss_cat$marital, gss_cat$race)
+
+
+# fct_collapse, factor levels 축소
+fct_collapse(gss_cat$marital, NO = c("No answer", "Never married"))
+levels(gss_cat$marital)
+levels(fct_collapse(gss_cat$marital, NO = c("No answer", "Never married"))) # "No answer" & "Never married" 수준을 "No"로 변경, 여러개 적용 가능
+
+
+# fct_count(), 범주형 별 갯수 및 비율 반환 
+fct_count(gss_cat$marital)
+fct_count(gss_cat$marital, sort = T)
+fct_count(gss_cat$marital, sort = T, prop = T)
+
+
+# fct_cross(), combine levels (두 개 이상 적용 가능)
+fct_cross(gss_cat$marital, gss_cat$race)
+fct_cross(gss_cat$marital, gss_cat$race, keep_empty = T) # keep_empty = T 설정 시 모든 조합을 levels로 지정
+levels(fct_cross(gss_cat$marital, gss_cat$race)) # 18
+levels(fct_cross(gss_cat$marital, gss_cat$race, keep_empty = T)) # 24
