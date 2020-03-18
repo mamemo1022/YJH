@@ -2,6 +2,7 @@
 
 if (!require(forcats)) {install.packages("forcats")}; require(forcats)
 
+
 # 예제 데이터
 head(forcats::gss_cat) # "forcats" 내장 데이터
 iris$Species
@@ -44,3 +45,124 @@ fct_cross(gss_cat$marital, gss_cat$race)
 fct_cross(gss_cat$marital, gss_cat$race, keep_empty = T) # keep_empty = T 설정 시 모든 조합을 levels로 지정
 levels(fct_cross(gss_cat$marital, gss_cat$race)) # 18
 levels(fct_cross(gss_cat$marital, gss_cat$race, keep_empty = T)) # 24
+
+
+# fct_drop(), drop unused levels
+x <- factor(c("A", "B", "C"), levels = c("A", "B", "C", "D")); x
+droplevels(x)
+fct_drop(x)
+fct_drop(x, only = "A")
+fct_drop(x, only = "D")
+
+
+# fct_expand(), add levels
+x <- factor(c("A", "B", "C"), levels = c("A", "B", "C")); x
+fct_expand(x, "D")
+fct_expand(x, c("D", "E"))
+
+
+# fct_explicit_na(), make missing values
+x <- factor(c("A", "B", NA, "C", NA, "A", "B", "A")); x
+fct_count(x)
+fct_explicit_na(x) # A B C (Missing)
+fct_count(fct_explicit_na(x))
+
+
+# fct_inorder(), reorder levels
+levels(gss_cat$marital)
+levels(fct_inorder(gss_cat$marital)) # 관측치가 처음 나타난 값부터 정렬
+levels(fct_infreq(gss_cat$marital)) # 관측치가 많은 순서대로 정렬
+fct_count(gss_cat$marital) # Married > Never married > Divorced > Widowed > Separated > No answer
+fct_inseq(factor(1:3, levels = c("3", "2", "1"))) # numeric 값으로 정렬
+
+
+# fct_lump(), 범주 갯수가 같을 경우 ties.method = c("min", "average", "first", "last", "random", "max")에서 선택
+fct_count(gss_cat$marital) # 17 No answer, 743 Separated
+fct_lump_min(f = gss_cat$marital, min = 750, other_level = "Other") # No answer & Separated -> Other 즉, min 기준보다 낮은 levels 합침
+fct_lump(gss_cat$marital, n = -3, other_level = "Other") # 음수일 경우 최소 3개를 남기고 나머지는 other로 합침
+fct_lump(gss_cat$marital, prop = 0.2, other_level = "Other") # 비율에 해당하는 범주들 other로 합침
+
+
+# fct_match(), 지정한 levels가 존재하는지 test
+fct_match(f = gss_cat$marital, lvls = c("Married", "Never married")) # logical type으로 반환
+table(fct_match(f = gss_cat$marital, lvls = c("Married", "Never married")))
+table(gss_cat$marital %in% c("Maried", "Davorced")) # %in%은 오직 FALSE 해당하는 것만 반환
+
+
+# fct_other(), levels를 대체
+fct_other(f = gss_cat$marital, keep = "Married", other_level = "Other")
+fct_other(f = gss_cat$marital, drop = "Married", other_level = "Other")
+fct_other(f = gss_cat$marital, drop = c("Married", "Never married"), other_level = "Other")
+
+
+# fct_recode(), 직접 levels 변경
+fct_recode(gss_cat$marital, Marry = "Married", Single = "Never married")
+
+
+# fct_relabel(), 지정 function에 따라 levels relabel
+fct_relabel(gss_cat$marital, ~gsub(" ", "_", .x))
+fct_relabel(gss_cat$marital, ~)
+fct_relabel(gss_cat$marital, ~paste("!", sep = "", .x))
+fct_relabel(gss_cat$marital, ~paste(.x, "!", sep = ""))
+
+convert_income <- function(x) {
+  regex <- "^(?:Lt |)[$]([0-9]+).*$"
+  is_range <- grepl(regex, x)
+  num_income <- as.numeric(gsub(regex, "\\1", x[is_range]))
+  num_income <- trunc(num_income / 5000) * 5000
+  x[is_range] <- paste0("Gt $", num_income)
+  x
+}
+levels(gss_cat$rincome)
+convert_income(levels(gss_cat$rincome))
+fct_relabel(gss_cat$rincome, convert_income)
+
+
+# fct_relevel(), 직접 levels 정렬
+fct_relevel(gss_cat$marital, "Married", after = 1)
+fct_relevel(gss_cat$marital, "Married", after = 4)
+fct_relevel(gss_cat$marital, "Married", after = Inf) # "Married"를 맨 마지막으로
+fct_relevel(gss_cat$marital, "Married", after = 0) # 처음으로 
+fct_relevel(gss_cat$marital, sort) # 알파벳 순서
+fct_relevel(gss_cat$marital, sample) # 랜덤
+fct_relevel(gss_cat$marital, rev) # 역순
+
+
+# fct_reorder(), in 1d; Reorder factor levels by sorting along another variable; ggplot에서 유용하게 사용 가능
+# fct_reorder2(), in 2d
+boxplot(Sepal.Width ~ Species, data = iris)
+boxplot(Sepal.Width ~ fct_reorder(Species, Sepal.Width), data = iris)
+boxplot(Sepal.Width ~ fct_reorder(Species, Sepal.Width, .desc = TRUE), data = iris)
+
+
+# fct_rev(), reverse order
+fct_rev(gss_cat$marital)
+fct_relevel(gss_cat$marital, rev) # 동일한 결과
+
+
+# fct_shift(), shift levels to left or right
+levels(gss_cat$marital)
+levels(fct_shift(gss_cat$marital, 1)) # 왼쪽으로 한칸씩 이동
+levels(fct_shift(gss_cat$marital, -1)) # 오른쪽으로 한칸씩 이동
+
+
+# fct_shuffle(), 랜덤하게 순서 변경
+levels(gss_cat$marital)
+levels(fct_shuffle(gss_cat$marital))
+
+
+# fct_unify(), unify the levels in a list of factos
+
+
+# fct_unique()
+head(gss_cat$marital, 10)
+unique(gss_cat$marital) # in order of appearance
+fct_unique(gss_cat$marital) # in order of levels
+
+
+# lvls()
+lvls_reorder(gss_cat$marital, 6:1)
+lvls_reorder(gss_cat$marital, c(1, 2, 6, 3, 5, 4))
+lvls_revalue(gss_cat$marital, new_levels = c("a", "b", "c", "d", "e", "f"))
+lvls_expand(gss_cat$marital, c(levels(gss_cat$marital), "New"))
+lvls_union(list(factor(letters), factor(LETTERS)))
