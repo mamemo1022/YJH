@@ -1,6 +1,6 @@
 # dlookr ------------------------------------------------------------------
 
-# import package
+# import packages
 if (!require(dlookr)) {install.packages("dlookr")}; require(dlookr)
 if (!require(dplyr)) {install.packages("dplyr")}; require(dplyr)
 if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
