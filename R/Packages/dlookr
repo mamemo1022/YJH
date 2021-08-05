@@ -1,0 +1,68 @@
+# dlookr ------------------------------------------------------------------
+
+# import package
+if (!require(dlookr)) {install.packages("dlookr")}; require(dlookr)
+if (!require(dplyr)) {install.packages("dplyr")}; require(dplyr)
+if (!require(ggplot2)) {install.packages("ggplot2")}; require(ggplot2)
+
+# 예제 data
+head(diamonds, 10)
+
+
+# data summary & diagnosis, 변수 type, missing value, cardinality
+dlookr::diagnose(diamonds)
+dlookr::diagnose(diamonds, carat, cut, price) # 특정 변수 지정
+
+# 변수 type 별로 적용 가능
+dlookr::diagnose_numeric(diamonds)
+dlookr::diagnose_category(diamonds)
+
+# outlier 진단 및 plotting
+dlookr::diagnose_outlier(diamonds)
+dlookr::plot_outlier(diamonds)
+find_outliers(diamonds)
+
+
+# 변수 별 각종 통계량 요약
+describe(diamonds)
+diamonds %>% group_by(cut) %>% describe(carat, price)
+
+
+# 연속형 변수의 정규성 검정
+normality(mtcars)
+mtcars %>% normality() %>% filter(p_value <= 0.01) %>% arrange(abs(p_value))
+plot_normality(mtcars)
+
+
+# 변수 간 correlation 확인
+correlate(diamonds)
+diamonds %>% 
+  filter(cut == "Premium") %>% 
+  group_by(clarity) %>% 
+  correlate(price) %>% 
+  filter(abs(coef_corr) > 0.5)
+plot_correlate(diamonds)
+
+
+# target 변수 지정, 변수 타입에 따라 관계 확인 방법 다름
+categ <- target_by(diamonds, clarity)
+relate(categ, price)
+plot(relate(categ, price))
+num <- target_by(diamonds, price)
+relate(num, carat)
+plot(relate(num, carat))
+
+
+# 변수변환, method = c("zscore", "minmax", "log", "log+1", "sqrt", "1/x", "x^2", "x^3", "Box-Cox", "Yeo-Johnson")
+transform(diamonds$price, method = c("zscore"))
+transform(diamonds$price, method = c("minmax"))
+price_log <- transform(diamonds$price, method = c("log"))
+plot(price_log)
+
+
+# skewness 확인
+find_skewness(diamonds, index = T, value = T)
+
+
+# 변수 binning, type = c("quantile", "equal", "pretty", "kmeans", "bclust")
+binning(diamonds$price, nbins = 4, labels = c("LQ1", "UQ1", "LQ3", "UG3"), type = "quantile")
